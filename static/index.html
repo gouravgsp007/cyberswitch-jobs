@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cybersecurity Prioritized Job Search & Excel Generator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Local SheetJS for 100% Guaranteed Offline/Online Instant Excel Generation -->
+  <script src="/xlsx.full.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            cyber: {
+              bg: '#080c16',
+              card: '#0f172a',
+              border: '#1e293b',
+              accent: '#06b6d4',
+              emerald: '#10b981',
+              excel: '#107c41'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #070b14;
+      color: #e2e8f0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b1120;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #25334d;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#070b14] text-slate-100 pb-16 md:pb-0">
+
+  <!-- TOP APP BAR -->
+  <header class="border-b border-slate-800 bg-[#090e1a]/95 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-[96rem] mx-auto px-3 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/20 flex-shrink-0">
+          <i data-lucide="check-check" class="w-5 h-5 sm:w-6 sm:h-6 text-slate-950"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center space-x-2 flex-wrap">
+            <h1 class="text-base sm:text-lg font-bold text-white tracking-tight truncate">
+              Cybersecurity Job Engine
+            </h1>
+            <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-950 border border-emerald-800 text-emerald-300">P1 Top-Rated Only</span>
+          </div>
+          <p class="text-[11px] text-slate-400 truncate">Candidate: <strong class="text-slate-200">Gourav Pandit Parit</strong> • SC-200 • Palo Alto • Splunk</p>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto">
+        <button onclick="fetchFreshJobs()" id="btn-refresh" class="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-center space-x-1.5 transition shadow">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span>Rescan</span>
+        </button>
+
+        <button onclick="downloadExcelFile()" class="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center space-x-1.5 transition shadow-lg shadow-emerald-600/25">
+          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+          <span>Download Excel (.xlsx)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-[96rem] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
+
+    <!-- PRIORITY TIER STATS STRIP -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+      <div onclick="filterByPriority('P1')" class="cursor-pointer bg-emerald-950/25 border border-emerald-800/70 hover:border-emerald-500 rounded-xl p-3 sm:p-4 flex items-center space-x-2.5 sm:space-x-3 transition">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-950 border border-emerald-700 flex items-center justify-center text-emerald-400 font-black text-xs sm:text-sm flex-shrink-0">
+          P1
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] sm:text-[11px] text-emerald-300 uppercase font-bold truncate">Top Priority</div>
+          <div class="text-lg sm:text-xl font-bold text-white font-mono" id="stat-p1">0</div>
+          <div class="text-[9px] sm:text-[10px] text-emerald-400 font-sans truncate">Apply Today • 12+ LPA</div>
+        </div>
+      </div>
+
+      <div onclick="filterByPriority('P2')" class="cursor-pointer bg-amber-950/25 border border-amber-800/70 hover:border-amber-500 rounded-xl p-3 sm:p-4 flex items-center space-x-2.5 sm:space-x-3 transition">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-950 border border-amber-700 flex items-center justify-center text-amber-400 font-black text-xs sm:text-sm flex-shrink-0">
+          P2
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] sm:text-[11px] text-amber-300 uppercase font-bold truncate">Medium Priority</div>
+          <div class="text-lg sm:text-xl font-bold text-white font-mono" id="stat-p2">0</div>
+          <div class="text-[9px] sm:text-[10px] text-amber-400 font-sans truncate">Apply This Week</div>
+        </div>
+      </div>
+
+      <div onclick="filterByPriority('P3')" class="cursor-pointer bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-xl p-3 sm:p-4 flex items-center space-x-2.5 sm:space-x-3 transition">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-400 font-black text-xs sm:text-sm flex-shrink-0">
+          P3
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] sm:text-[11px] text-slate-400 uppercase font-bold truncate">Low Priority</div>
+          <div class="text-lg sm:text-xl font-bold text-white font-mono" id="stat-p3">0</div>
+          <div class="text-[9px] sm:text-[10px] text-slate-500 font-sans truncate">Senior / Backup</div>
+        </div>
+      </div>
+
+      <div onclick="filterByPriority('all')" class="cursor-pointer bg-cyber-card border border-cyber-border hover:border-cyan-500 rounded-xl p-3 sm:p-4 flex items-center space-x-2.5 sm:space-x-3 transition">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-cyan-950 border border-cyan-800 flex items-center justify-center text-cyan-400 font-black text-xs sm:text-sm flex-shrink-0">
+          <i data-lucide="layers" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+        </div>
+        <div class="min-w-0">
+          <div class="text-[10px] sm:text-[11px] text-cyan-300 uppercase font-bold truncate">Total Openings</div>
+          <div class="text-lg sm:text-xl font-bold text-white font-mono" id="stat-total">0</div>
+          <div class="text-[9px] sm:text-[10px] text-slate-400 font-sans truncate">LinkedIn + Naukri</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESPONSIVE FILTER BAR -->
+    <div class="bg-cyber-card border border-cyber-border rounded-xl p-3 sm:p-4 space-y-3">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-3 items-center">
+        <!-- Search Input -->
+        <div class="sm:col-span-5 relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+          <input type="text" id="search-input" onkeyup="applyFilters()" placeholder="Search title, company, or stack (e.g. Palo Alto, Sentinel)..." class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+        </div>
+
+        <!-- Priority Dropdown -->
+        <div class="sm:col-span-3">
+          <select id="priority-select" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-semibold">
+            <option value="all">All Priorities</option>
+            <option value="P1" selected>P1 - High Priority (Apply Today)</option>
+            <option value="P2">P2 - Medium Priority</option>
+            <option value="P3">P3 - Low Priority</option>
+          </select>
+        </div>
+
+        <!-- Location Dropdown -->
+        <div class="sm:col-span-2">
+          <select id="location-select" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+            <option value="all">All Locations</option>
+            <option value="pune">Pune</option>
+            <option value="mumbai">Mumbai</option>
+            <option value="remote">Remote</option>
+          </select>
+        </div>
+
+        <!-- Portal Dropdown -->
+        <div class="sm:col-span-2">
+          <select id="portal-select" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+            <option value="all">All Portals</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="naukri">Naukri</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+        <div>
+          Showing <span id="showing-count" class="font-bold text-white">0</span> of <span id="total-count" class="font-bold text-white">0</span> openings
+        </div>
+        <div id="last-updated-text" class="font-mono text-slate-500 text-[10px] sm:text-[11px]">
+          Last Synced: Loading...
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MOBILE CARD VIEW (VISIBLE ON PHONES: block md:hidden) ==================== -->
+    <div id="mobile-cards-container" class="block md:hidden space-y-3">
+      <!-- Populated dynamically on phones -->
+    </div>
+
+    <!-- ==================== DESKTOP SPREADSHEET TABLE (VISIBLE ON DESKTOP: hidden md:block) ==================== -->
+    <div class="hidden md:block bg-cyber-card border border-cyber-border rounded-xl overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-950 text-slate-400 border-b border-slate-800 font-semibold uppercase text-[10px] tracking-wider">
+              <th class="py-3 px-3 text-center w-12">#</th>
+              <th class="py-3 px-3 text-center min-w-[130px]">Priority Tier</th>
+              <th class="py-3 px-2 text-center w-16">Match</th>
+              <th class="py-3 px-4 min-w-[240px]">Why Prioritized (Match Factors)</th>
+              <th class="py-3 px-4 min-w-[220px]">Job Title</th>
+              <th class="py-3 px-4 min-w-[160px]">Company Name</th>
+              <th class="py-3 px-4 min-w-[150px]">Location</th>
+              <th class="py-3 px-3 min-w-[120px]">Exp Req</th>
+              <th class="py-3 px-3 min-w-[150px]">Salary / CTC</th>
+              <th class="py-3 px-2 text-center w-16">Vacancies</th>
+              <th class="py-3 px-3 min-w-[130px]">Applicants</th>
+              <th class="py-3 px-4 min-w-[180px]">HR / Recruiter Email</th>
+              <th class="py-3 px-3 text-center min-w-[100px]">Action</th>
+              <th class="py-3 px-3 text-center w-20">Source</th>
+              <th class="py-3 px-3 text-center w-20">Posted</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-tbody" class="divide-y divide-slate-800/60 font-mono">
+            <!-- Populated dynamically on desktop -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MOBILE FLOATING EXCEL DOWNLOAD BAR (PHONE ONLY) -->
+  <div class="block md:hidden fixed bottom-0 left-0 right-0 p-3 bg-[#090e1a]/95 backdrop-blur border-t border-slate-800 z-50">
+    <button onclick="downloadExcelFile()" class="w-full py-2.5 rounded-xl bg-emerald-600 active:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center space-x-2 shadow-xl shadow-emerald-600/30">
+      <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+      <span>Download Prioritized Excel (.xlsx)</span>
+    </button>
+  </div>
+
+  <footer class="hidden md:block border-t border-slate-800 bg-[#080c14] py-3 text-center text-xs text-slate-500">
+    Prioritized Cybersecurity Job Engine • Sorted by Match Score for Gourav Pandit Parit
+  </footer>
+
+  <script>
+    let allJobs = [];
+
+    async function loadJobs() {
+      try {
+        const res = await fetch('/api/jobs');
+        const data = await res.json();
+        allJobs = data.jobs || [];
+
+        document.getElementById('stat-total').textContent = data.total_count;
+        document.getElementById('total-count').textContent = data.total_count;
+        document.getElementById('last-updated-text').textContent = 'Last Synced: ' + (data.last_updated || 'Today');
+
+        let p1Count = 0, p2Count = 0, p3Count = 0;
+        allJobs.forEach(j => {
+          const p = (j.priority || '').toUpperCase();
+          if (p.includes('P1')) p1Count++;
+          else if (p.includes('P2')) p2Count++;
+          else p3Count++;
+        });
+
+        document.getElementById('stat-p1').textContent = p1Count;
+        document.getElementById('stat-p2').textContent = p2Count;
+        document.getElementById('stat-p3').textContent = p3Count;
+
+        applyFilters();
+      } catch (err) {
+        console.error('Failed to load jobs:', err);
+      }
+    }
+
+    function renderTable(list) {
+      // 1. Render Desktop Table
+      const tbody = document.getElementById('jobs-tbody');
+      // 2. Render Mobile Cards
+      const mContainer = document.getElementById('mobile-cards-container');
+
+      document.getElementById('showing-count').textContent = list.length;
+
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="15" class="text-center py-12 text-slate-500 font-sans">No matching job openings found. Adjust filters above.</td></tr>`;
+        mContainer.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs font-sans">No matching job openings found. Adjust filters above.</div>`;
+        return;
+      }
+
+      // Desktop Table Rows
+      tbody.innerHTML = list.map(j => {
+        const isP1 = (j.priority || '').includes('P1');
+        const isP2 = (j.priority || '').includes('P2');
+        
+        const priorityBadge = isP1 
+          ? '<span class="px-2.5 py-1 rounded bg-emerald-950 border border-emerald-700 text-emerald-300 font-bold text-[10px] whitespace-nowrap">P1 • Apply Today</span>'
+          : isP2
+          ? '<span class="px-2.5 py-1 rounded bg-amber-950 border border-amber-700 text-amber-300 font-bold text-[10px] whitespace-nowrap">P2 • This Week</span>'
+          : '<span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400 text-[10px] whitespace-nowrap">P3 • Backup</span>';
+
+        const scoreColor = j.match_score >= 90 ? 'text-emerald-400 font-black' : (j.match_score >= 70 ? 'text-amber-400 font-bold' : 'text-slate-400');
+        const isLinkedIn = (j.source || '').toLowerCase().includes('linkedin');
+        const sourceBadge = isLinkedIn 
+          ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold border bg-blue-950/80 border-blue-800 text-blue-300">LinkedIn</span>'
+          : '<span class="px-2 py-0.5 rounded text-[10px] font-semibold border bg-amber-950/80 border-amber-800 text-amber-300">Naukri</span>';
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition ${isP1 ? 'bg-emerald-950/5' : ''}">
+            <td class="py-2.5 px-3 text-center text-slate-500">${j.sl_no}</td>
+            <td class="py-2.5 px-3 text-center">${priorityBadge}</td>
+            <td class="py-2.5 px-2 text-center font-mono ${scoreColor}">${j.match_score}%</td>
+            <td class="py-2.5 px-4 font-sans text-xs text-slate-300">
+              <span class="text-cyan-300 font-medium">${j.priority_reasons}</span>
+            </td>
+            <td class="py-2.5 px-4 font-sans font-semibold text-white">
+              <a href="${j.job_post_url}" target="_blank" class="hover:text-cyan-400 hover:underline transition">${j.title}</a>
+            </td>
+            <td class="py-2.5 px-4 font-sans font-medium text-slate-200">${j.company}</td>
+            <td class="py-2.5 px-4 font-sans text-slate-300">${j.location}</td>
+            <td class="py-2.5 px-3 text-slate-300">${j.experience}</td>
+            <td class="py-2.5 px-3 text-emerald-400 font-bold">${j.salary}</td>
+            <td class="py-2.5 px-2 text-center text-slate-400">${j.vacancies || 1}</td>
+            <td class="py-2.5 px-3 font-sans text-slate-400">${j.total_applicants}</td>
+            <td class="py-2.5 px-4 text-slate-400 text-[11px] truncate max-w-[180px]" title="${j.hr_email}">${j.hr_email}</td>
+            <td class="py-2.5 px-3 text-center">
+              <a href="${j.apply_url}" target="_blank" class="inline-flex items-center space-x-1 px-3 py-1 rounded bg-cyan-950 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 text-[11px] font-sans font-semibold transition">
+                <span>Apply</span>
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+              </a>
+            </td>
+            <td class="py-2.5 px-3 text-center">${sourceBadge}</td>
+            <td class="py-2.5 px-3 text-center text-slate-500 text-[11px]">${j.date_posted}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Mobile Cards
+      mContainer.innerHTML = list.map(j => {
+        const isP1 = (j.priority || '').includes('P1');
+        const isP2 = (j.priority || '').includes('P2');
+        const priorityColor = isP1 
+          ? 'bg-emerald-950/80 border-emerald-700 text-emerald-300' 
+          : isP2 
+          ? 'bg-amber-950/80 border-amber-700 text-amber-300' 
+          : 'bg-slate-900 border-slate-800 text-slate-400';
+
+        const isLinkedIn = (j.source || '').toLowerCase().includes('linkedin');
+        const sourceColor = isLinkedIn ? 'text-blue-400' : 'text-amber-400';
+
+        return `
+          <div class="bg-cyber-card border border-cyber-border rounded-xl p-3.5 space-y-2.5 shadow">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center space-x-1.5 flex-wrap">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${priorityColor}">
+                  ${j.priority.split('-')[0].trim()} • ${j.action}
+                </span>
+                <span class="text-xs font-mono font-black ${j.match_score >= 90 ? 'text-emerald-400' : 'text-amber-400'}">
+                  ${j.match_score}% Match
+                </span>
+              </div>
+              <span class="text-[10px] font-semibold ${sourceColor}">${j.source}</span>
+            </div>
+
+            <div>
+              <a href="${j.job_post_url}" target="_blank" class="text-sm font-bold text-white hover:text-cyan-400 leading-snug block">
+                ${j.title}
+              </a>
+              <div class="text-xs font-semibold text-slate-300 mt-0.5">${j.company}</div>
+              <div class="text-[11px] text-slate-400 flex items-center space-x-1 mt-0.5">
+                <i data-lucide="map-pin" class="w-3 h-3 text-slate-500"></i>
+                <span>${j.location}</span>
+              </div>
+            </div>
+
+            <div class="p-2 rounded bg-slate-950/70 border border-slate-800/80 space-y-1 text-[11px]">
+              <div class="text-cyan-300 font-sans font-medium text-[11px]">
+                &bull; ${j.priority_reasons}
+              </div>
+              <div class="flex justify-between items-center text-slate-400 pt-1 border-t border-slate-900 font-mono text-[10px]">
+                <span>CTC: <strong class="text-emerald-400">${j.salary}</strong></span>
+                <span>Exp: <strong class="text-slate-200">${j.experience}</strong></span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span class="truncate max-w-[180px]">HR: ${j.hr_email}</span>
+              <span>${j.total_applicants}</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <a href="${j.job_post_url}" target="_blank" class="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold text-center flex items-center justify-center space-x-1">
+                <span>View Post</span>
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+              </a>
+
+              <a href="${j.apply_url}" target="_blank" class="py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold text-center flex items-center justify-center space-x-1 shadow">
+                <span>Apply Now</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function applyFilters() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      const pFilter = document.getElementById('priority-select').value;
+      const loc = document.getElementById('location-select').value.toLowerCase();
+      const portal = document.getElementById('portal-select').value.toLowerCase();
+
+      const filtered = allJobs.filter(j => {
+        const matchQ = !q || 
+          j.title.toLowerCase().includes(q) || 
+          j.company.toLowerCase().includes(q) || 
+          j.location.toLowerCase().includes(q) ||
+          j.experience.toLowerCase().includes(q) ||
+          (j.priority_reasons && j.priority_reasons.toLowerCase().includes(q));
+
+        const matchP = pFilter === 'all' || (j.priority || '').includes(pFilter);
+        const matchLoc = loc === 'all' || j.location.toLowerCase().includes(loc);
+        const matchPortal = portal === 'all' || j.source.toLowerCase().includes(portal);
+
+        return matchQ && matchP && matchLoc && matchPortal;
+      });
+
+      renderTable(filtered);
+    }
+
+    function filterByPriority(tier) {
+      document.getElementById('priority-select').value = tier;
+      applyFilters();
+    }
+
+    async function fetchFreshJobs() {
+      const btn = document.getElementById('btn-refresh');
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-cyan-400"></i><span>Scanning...</span>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/scrape-and-export?search_term=cybersecurity&location=Pune,%20India&results_wanted=20', { method: 'POST' });
+        const data = await res.json();
+        await loadJobs();
+        alert(`Rescan complete! Updated Excel workbook with latest priority rankings.`);
+      } catch (err) {
+        alert('Refresh completed.');
+      } finally {
+        btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-cyan-400"></i><span>Rescan</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    function downloadExcelFile() {
+      try {
+        if (typeof XLSX !== 'undefined' && allJobs && allJobs.length > 0) {
+          const pFilter = document.getElementById('priority-select').value;
+          // Export either the active prioritized subset or all jobs
+          const targetJobs = allJobs;
+          
+          const rows = targetJobs.map(j => ({
+            "Sl No": j.sl_no,
+            "Priority Tier": j.priority,
+            "Match Score": `${j.match_score}%`,
+            "Key Match Reasons / Evaluation": j.priority_reasons,
+            "Job Title": j.title,
+            "Company Name": j.company,
+            "Location": j.location,
+            "Exp Required": j.experience,
+            "Salary / CTC Mentioned": j.salary,
+            "Vacancies": j.vacancies,
+            "Applicants": j.total_applicants,
+            "HR / Recruiter Email": j.hr_email,
+            "Direct Apply Link": j.apply_url,
+            "Job Post Link": j.job_post_url,
+            "Source Portal": j.source,
+            "Date Posted": j.date_posted
+          }));
+
+          const ws = XLSX.utils.json_to_sheet(rows);
+          
+          // Column widths
+          ws['!cols'] = [
+            { wch: 8 },  // Sl No
+            { wch: 20 }, // Priority
+            { wch: 12 }, // Score
+            { wch: 40 }, // Reasons
+            { wch: 35 }, // Title
+            { wch: 24 }, // Company
+            { wch: 22 }, // Location
+            { wch: 16 }, // Exp
+            { wch: 22 }, // Salary
+            { wch: 10 }, // Vacancies
+            { wch: 18 }, // Applicants
+            { wch: 30 }, // Email
+            { wch: 25 }, // Apply Link
+            { wch: 25 }, // Job Link
+            { wch: 14 }, // Source
+            { wch: 14 }  // Date
+          ];
+          
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Prioritized Jobs");
+          XLSX.writeFile(wb, "Cybersecurity_Job_Openings.xlsx");
+          return;
+        }
+      } catch (err) {
+        console.error('Client XLSX generation error, using fallback:', err);
+      }
+      
+      // Fallback: direct browser navigation to static or API endpoint
+      const a = document.createElement('a');
+      a.href = '/api/download-excel';
+      a.setAttribute('download', 'Cybersecurity_Job_Openings.xlsx');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    window.addEventListener('DOMContentLoaded', loadJobs);
+  </script>
+</body>
+</html>

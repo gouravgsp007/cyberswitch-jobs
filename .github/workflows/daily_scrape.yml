@@ -1,0 +1,35 @@
+name: Daily Cybersecurity Job Curator (LinkedIn & Naukri)
+
+on:
+  schedule:
+    # Runs everyday at 02:30 UTC (08:00 AM IST)
+    - cron: '30 2 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Job Scraper
+        run: |
+          python scrape_openings.py
+
+      - name: Commit and push updated jobs
+        run: |
+          git config --global user.name "CyberSwitch Bot"
+          git config --global user.email "bot@cyberswitch10x.local"
+          git add data/live_scraped_jobs.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-curate: Daily fresh cybersecurity openings [$(date +'%Y-%m-%d')]" && git push)

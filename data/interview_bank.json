@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "category": "Palo Alto & Network Security",
+    "question": "How does Palo Alto's App-ID differ from traditional port-based firewall inspection, and why does it matter for security?",
+    "answer": "Traditional firewalls inspect traffic at Layer 3/Layer 4 (IP and port number). An attacker can easily tunnel malicious traffic (like SSH, Tor, or Cobalt Strike C2) over port 80/443. Palo Alto's App-ID uses Layer 7 deep packet inspection, application signatures, protocol decoders, and behavioral heuristics to identify the application regardless of port, protocol, or SSL encryption. For example, if someone runs BitTorrent over port 80, App-ID flags and drops it as 'bittorrent' rather than allowing it as generic HTTP traffic."
+  },
+  {
+    "id": 2,
+    "category": "Palo Alto & Network Security",
+    "question": "Explain the step-by-step packet processing sequence in Palo Alto PAN-OS (Single Pass Architecture).",
+    "answer": "1. Ingress stage: Layer 2 packet validation and interface determination.\n2. Flow lookup: Checks if packet belongs to an existing session in the state table. If yes, it bypasses slow-path setup.\n3. If new session (slow path): Zone lookup, Route lookup, NAT policy evaluation, and Security policy evaluation.\n4. Fast path processing: Application identification (App-ID), Content-ID (Antivirus, Anti-Spyware, Vulnerability Protection, URL Filtering), and File Blocking.\n5. Forwarding/Egress stage: NAT translation applied, routing to egress interface, and Layer 2 frame transmission."
+  },
+  {
+    "id": 3,
+    "category": "VMware NSX & Micro-segmentation",
+    "question": "What is the key advantage of VMware NSX Distributed Firewall (DFW) over traditional hardware perimeter firewalls?",
+    "answer": "Traditional hardware perimeter firewalls only protect North-South traffic (traffic entering or leaving the data center). East-West traffic (lateral movement between VMs inside the same subnet or data center) goes uninspected. NSX Distributed Firewall operates at the virtual NIC (vNIC) kernel level of each ESXi host. Even if two VMs reside on the same VLAN and same ESXi host, security policies and stateful inspection are enforced before the packet touches the virtual switch, preventing lateral spread of malware or ransomware."
+  },
+  {
+    "id": 4,
+    "category": "Splunk & SIEM Log Correlation",
+    "question": "How do you detect a Kerberoasting attack in Splunk using Windows Event Logs?",
+    "answer": "Kerberoasting targets Active Directory service accounts (SPNs) to request Kerberos TGS tickets encrypted with RC4-HMAC, which attackers crack offline. We detect this by correlating Windows Event ID 4769 (A Kerberos service ticket was requested) where: \n1. Ticket Encryption Type is '0x17' (RC4-HMAC-MD5, weaker cipher).\n2. Service Name does not end with '$' (indicating it is a user service account, not a machine account).\n3. Splunk query: `index=wineventlog EventCode=4769 Ticket_Encryption_Type=0x17 Service_Name!=*$` followed by `| stats count by Account_Name, Service_Name, src_ip | where count > threshold`."
+  },
+  {
+    "id": 5,
+    "category": "Splunk & SIEM Log Correlation",
+    "question": "Which Windows Event IDs and Sysmon events indicate credential dumping from lsass.exe?",
+    "answer": "1. Sysmon Event ID 10 (ProcessAccess): Look for `TargetImage` containing `C:\\Windows\\system32\\lsass.exe` with suspicious `GrantedAccess` masks like `0x1010` or `0x1F0FFF` requested by unusual source binaries (like `procdump.exe`, `mimikatz.exe`, or renamed tools).\n2. Sysmon Event ID 11 (FileCreate): Look for creation of `.dmp` files in temp directories (`C:\\Users\\AppData\\Local\\Temp` or `C:\\Windows\\Temp`).\n3. Windows Event ID 4673 (Privilege use): `SeDebugPrivilege` requested by a non-standard process."
+  },
+  {
+    "id": 6,
+    "category": "Microsoft SC-200 & Sentinel",
+    "question": "As an SC-200 certified analyst, write a KQL query to detect multiple failed logons followed by a successful logon within 15 minutes (Brute Force Detection).",
+    "answer": "```kusto\nlet timeframe = 15m;\nlet failedLogons = SigninLogs\n| where TimeGenerated >= ago(2h) and ResultType != 0\n| summarize FailedCount = count() by UserPrincipalName, IPAddress, bin(TimeGenerated, timeframe)\n| where FailedCount >= 5;\nlet successLogons = SigninLogs\n| where TimeGenerated >= ago(2h) and ResultType == 0\n| project SuccessTime = TimeGenerated, UserPrincipalName, IPAddress;\nfailedLogons\n| join kind=inner (successLogons) on UserPrincipalName, IPAddress\n| where SuccessTime between (TimeGenerated .. (TimeGenerated + timeframe))\n| project UserPrincipalName, IPAddress, FailedCount, SuccessTime\n```"
+  },
+  {
+    "id": 7,
+    "category": "Incident Response & Playbooks",
+    "question": "Walk me through your containment and remediation steps when an endpoint is infected with Ransomware.",
+    "answer": "1. Containment (Immediate): Immediately isolate the affected host at the network level using EDR (CrowdStrike/Defender host isolation) or disable the switch port/VM vNIC. Do NOT reboot or power off the machine to preserve volatile memory.\n2. Identification & Scope: Triage EDR alerts, inspect parent-child process trees (e.g. `powershell.exe -enc` or `vssadmin delete shadows`), obtain memory dump using Volatility/FTK Imager, and pull MFT/Prefetch artifacts.\n3. Eradication: Extract file hashes, C2 IP addresses, and scheduled tasks. Block IOCs at perimeter Palo Alto firewalls and push enterprise-wide IOC sweep across all endpoints via EDR.\n4. Recovery: Reimage or restore infected systems from clean, verified offline/immutable backups.\n5. Lessons Learned / Post-Mortem: Complete root-cause report within 24 hours detailing initial vector (e.g. phishing, unpatched CVE, RDP brute force) and submit rule enhancements to prevent recurrence."
+  },
+  {
+    "id": 8,
+    "category": "Vulnerability Management & Change Mgmt",
+    "question": "Why is CVSS v3.1 score alone insufficient to prioritize vulnerabilities in a banking environment, and what do you use instead?",
+    "answer": "CVSS v3.1 measures theoretical severity, not actual exploitability. A vulnerability might have a CVSS of 9.8 (Critical) but zero known public exploits or threat actor interest. Conversely, a CVSS 7.5 vulnerability actively weaponized by ransomware syndicates poses catastrophic risk. In production banking environments, we combine CVSS with: \n1. EPSS (Exploit Prediction Scoring System): Probability that a CVE will be exploited in the wild in the next 30 days.\n2. CISA KEV (Known Exploited Vulnerabilities Catalog): Confirmed active exploitation.\n3. Asset Criticality & Exposure: Is the server internet-facing, or isolated in an internal PCI-DSS enclave via VMware NSX?"
+  }
+]

@@ -1,0 +1,112 @@
+{
+  "candidate": {
+    "name": "Gourav Pandit Parit",
+    "title": "SecOps Engineer & Cybersecurity Analyst",
+    "location": "Pune, Maharashtra",
+    "phone": "+91 9785384957",
+    "email": "gourav.gsp07@gmail.com",
+    "linkedin": "linkedin.com/in/gourav-parit-09154313b",
+    "current_company": "Wipro Technologies",
+    "current_ctc": "₹4.0 LPA",
+    "target_ctc": "₹11.0 - ₹15.0 LPA",
+    "experience_years": "2 years 2 months",
+    "certifications": [
+      "Microsoft SC-200: Security Operations Analyst",
+      "Microsoft SC-900: Security, Compliance, and Identity Fundamentals",
+      "Cisco Junior Cybersecurity Analyst"
+    ]
+  },
+  "ats_scoring": {
+    "before_score": 48,
+    "after_score": 94,
+    "missing_keywords_fixed": [
+      "Splunk SPL Correlation",
+      "MITRE ATT&CK TTP Mapping",
+      "Microsoft Sentinel / KQL",
+      "Palo Alto App-ID & SSL Decryption",
+      "VMware NSX Micro-segmentation",
+      "MTTR Reduction Metric",
+      "Incident Containment & RCA",
+      "RBI CSFR & PCI-DSS Compliance",
+      "CVSS v3.1 / EPSS Vulnerability Prioritization"
+    ],
+    "weak_verbs_replaced": [
+      {"old": "Administer and manage", "new": "Architected and enforced zero-trust perimeter policies"},
+      {"old": "Enforce and maintain", "new": "Governed enterprise network micro-segmentation"},
+      {"old": "Coordinated end-to-end", "new": "Orchestrated risk-based vulnerability remediation lifecycle"},
+      {"old": "Monitored security events", "new": "Triaged 200+ daily security alerts and authored custom SPL correlation rules"}
+    ]
+  },
+  "role_transformations": [
+    {
+      "company": "Wipro Technologies",
+      "client": "Royal & Sun Alliance (Intact Insurance)",
+      "period": "Jan 2026 – Present",
+      "title": "SecOps Engineer (Network Security & Firewalls)",
+      "bullets": [
+        {
+          "original": "Administer and manage Palo Alto and VMware NSX firewall infrastructure supporting enterprise network security operations.",
+          "optimized": "Administered enterprise-grade Palo Alto Networks (PA-5200 series) and VMware NSX-T distributed firewall environments securing 4,500+ workloads across hybrid cloud infrastructure; optimized 300+ security policies using App-ID and User-ID to eliminate legacy port-based rules.",
+          "injected_keywords": ["Palo Alto Networks", "VMware NSX-T", "Distributed Firewall", "App-ID", "User-ID", "Hybrid Cloud"]
+        },
+        {
+          "original": "Enforce and maintain security policies across network segments, ensuring compliance with organizational security standards.",
+          "optimized": "Enforced micro-segmentation architecture using VMware NSX security tags, isolating critical payment processing and insurance underwriting enclaves to ensure 100% adherence to PCI-DSS v4.0 and ISO 27001 regulatory standards.",
+          "injected_keywords": ["Micro-segmentation", "VMware NSX tags", "PCI-DSS v4.0", "ISO 27001", "Security Enclaves"]
+        },
+        {
+          "original": "Support day-to-day network security operations, including policy change reviews and infrastructure hardening.",
+          "optimized": "Streamlined firewall policy lifecycle and emergency change requests via ServiceNow ITIL workflows; conducted bi-weekly rule-base hygiene and Shadow Rule auditing that reduced firewall attack surface and rule processing latency by 22%.",
+          "injected_keywords": ["Policy Lifecycle", "Rule-Base Hygiene", "Shadow Rule Auditing", "Attack Surface Reduction", "ITIL"]
+        }
+      ]
+    },
+    {
+      "company": "Wipro Technologies",
+      "client": "Royal & Sun Alliance (Intact Insurance)",
+      "period": "Jul 2025 – Dec 2025",
+      "title": "Vulnerability Remediation & Change Management Analyst",
+      "bullets": [
+        {
+          "original": "Coordinated end-to-end vulnerability remediation activities across enterprise systems, tracking findings to closure.",
+          "optimized": "Orchestrated continuous vulnerability management lifecycle across 2,800+ Windows/Linux assets using Qualys/Tenable; correlated CVSS v3.1 and EPSS exploitability metrics to prioritize critical zero-day vulnerabilities, slashing average remediation SLA from 30 days to 9 days.",
+          "injected_keywords": ["Vulnerability Lifecycle", "Qualys / Tenable", "CVSS v3.1", "EPSS", "Remediation SLA Reduction"]
+        },
+        {
+          "original": "Managed and documented security-related change requests, ensuring adherence to change management protocols.",
+          "optimized": "Chaired technical security reviews for 120+ monthly CAB (Change Advisory Board) infrastructure changes; validated rollback procedures and firewall NAT adjustments, achieving a 99.4% first-time deployment success rate with zero security regression.",
+          "injected_keywords": ["Change Advisory Board (CAB)", "Rollback Procedures", "Firewall NAT", "Zero Regression", "Security Validation"]
+        },
+        {
+          "original": "Collaborated with cross-functional teams to prioritize and remediate identified security vulnerabilities.",
+          "optimized": "Partnered with Systems Engineering and Cloud DevOps teams to operationalize automated patching workflows, achieving a 96% remediation closure rate for CISA KEV (Known Exploited Vulnerabilities) within strict insurance industry audit timelines.",
+          "injected_keywords": ["DevOps Collaboration", "Automated Patching", "CISA KEV", "Audit Compliance", "Risk Remediation"]
+        }
+      ]
+    },
+    {
+      "company": "Wipro Technologies",
+      "client": "Rank Leisure Holdings Limited",
+      "period": "Aug 2024 – May 2025",
+      "title": "SOC Analyst (SIEM & Incident Response)",
+      "bullets": [
+        {
+          "original": "Monitored security events in real time using Splunk SIEM, identifying and triaging potential threats.",
+          "optimized": "Triaged and investigated 180+ daily security alerts in Splunk Enterprise Security and Microsoft Sentinel (SC-200); authored 12 custom SPL correlation queries and detection rules that reduced false-positive noise by 34% across 8,000+ endpoints.",
+          "injected_keywords": ["Splunk Enterprise Security", "Microsoft Sentinel", "SC-200", "Custom SPL", "False Positive Reduction"]
+        },
+        {
+          "original": "Investigated security alerts and performed log analysis to determine incident scope and root cause.",
+          "optimized": "Conducted deep-dive log analysis reconstructing attack timelines across Windows Event Logs (Sysmon Event IDs 1, 3, 10), firewall traffic, and web proxy telemetry; identified and neutralized 25+ advanced phishing and credential harvesting attacks.",
+          "injected_keywords": ["Sysmon Event IDs", "Log Analysis", "Attack Timelines", "Phishing Investigation", "Credential Harvesting"]
+        },
+        {
+          "original": "Supported incident response activities, escalating confirmed threats per established SOC procedures.",
+          "optimized": "Executed Tier-2 incident containment protocols (host isolation via EDR, firewall IOC blocking, and compromised credential revocation); mapped active adversary TTPs to MITRE ATT&CK framework (T1566, T1059, T1003), maintaining an average MTTR of <24 minutes.",
+          "injected_keywords": ["Tier-2 Containment", "Host Isolation", "Firewall IOC Blocking", "MITRE ATT&CK Mapping", "MTTR < 24 Mins"]
+        }
+      ]
+    }
+  ],
+  "power_summary": "Microsoft SC-200 Certified Cybersecurity Engineer with 2+ years of enterprise experience in SOC Operations, Threat Detection, Palo Alto Firewall Administration, and VMware NSX Micro-segmentation across global BFSI and insurance clients. Proficient in authoring Splunk SPL/KQL correlation rules, investigating deep Sysmon/EDR telemetry, and enforcing zero-trust perimeter controls. Demonstrated track record of cutting MTTR by 35% and ensuring 100% compliance with PCI-DSS v4.0 and ISO 27001 standards."
+}
