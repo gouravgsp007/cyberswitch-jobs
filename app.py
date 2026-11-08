@@ -191,6 +191,17 @@ def get_gcc_seeds():
     """
     return {"status": "success", "seeds": GCC_CAREER_SEEDS}
 
+@app.get("/")
+def serve_index():
+    return FileResponse(
+        os.path.join(STATIC_DIR, "index.html"),
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
+
 # Mount frontend
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
