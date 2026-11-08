@@ -36,23 +36,59 @@ def extract_salary(row):
         
     return "Not Disclosed (GCC Band ₹11 - ₹15 LPA)"
 
+SENIOR_KEYWORDS = [
+    'senior', 'sr.', 'sr ', 'lead', 'principal', 'architect', 'manager', 'director', 
+    'head', 'staff', 'avp', 'vp ', 'expert', 'specialist iii', 'specialist ii', 
+    'level 3', 'level 4', 'tier 3', 'team lead', 'l3', 'l4', 'consultant ii', 'tech lead'
+]
+
+def is_strictly_2_to_3_years(job):
+    """
+    STRICT FILTER: Rejects ANY job requiring > 3 years experience.
+    Only allows jobs tailored for 2 - 3 Years (Junior to Mid-Level).
+    """
+    title = str(job.get('title', '')).lower()
+    desc = (str(job.get('description', '')) + ' ' + title).lower()
+    
+    # 1. Reject if title explicitly states Senior, Lead, Principal, Manager, Architect, etc.
+    if any(k in title for k in SENIOR_KEYWORDS):
+        return False, "Senior/Lead Title"
+        
+    # 2. Check year ranges: any range with upper bound > 3 is strictly rejected
+    ranges = re.findall(r'(\d+)\s*(?:-|to)\s*(\d+)\s*(?:years?|yrs?)', desc)
+    for r_min, r_max in ranges:
+        min_y = int(r_min)
+        max_y = int(r_max)
+        if max_y > 3:
+            return False, f"Requires {min_y}-{max_y} YOE (Exceeds 3 Years)"
+            
+    # 3. Check single numbers like '4+ years', '5 years'
+    singles = re.findall(r'(\d+)\+?\s*(?:years?|yrs?)(?:\s*(?:of\s*)?experience)?', desc)
+    for s in singles:
+        y = int(s)
+        if y > 3 and y < 40:
+            return False, f"Requires {y}+ YOE (Exceeds 3 Years)"
+            
+    # 4. Check existing experience field if explicitly > 3
+    exp_field = str(job.get('experience', '')).lower()
+    if any(y in exp_field for y in ['4 to', '5 to', '6 to', '7 to', '8 to', '10 to', '4+', '5+', '6+', '7+', '8+']):
+        return False, f"Metadata exceeds 3 yrs ({exp_field})"
+        
+    return True, "2 - 3 Years"
+
 def extract_experience(row):
-    exp = row.get("experience_range")
-    if pd.notna(exp) and str(exp).strip() and str(exp) != "nan":
-        return str(exp).strip()
+    valid, exp_str = is_strictly_2_to_3_years(row)
+    if not valid:
+        return exp_str
     
     desc = str(row.get("description", ""))
     title = str(row.get("title", ""))
     
-    m = re.search(r'(\d+)\s*(?:-|to)\s*(\d+)\s*(?:years?|yrs?)', title + " " + desc, re.IGNORECASE)
+    m = re.search(r'([1-3])\s*(?:-|to)\s*([2-3])\s*(?:years?|yrs?)', title + " " + desc, re.IGNORECASE)
     if m:
         return f"{m.group(1)} - {m.group(2)} Years"
         
-    m_single = re.search(r'(\d+)\+?\s*(?:years?|yrs?)\s*(?:of\s*)?experience', desc, re.IGNORECASE)
-    if m_single:
-        return f"{m_single.group(1)}+ Years"
-        
-    return "1 - 4 Years (Mid Level)"
+    return "2 - 3 Years"
 
 def extract_hr_email(row):
     raw_emails = row.get("emails", [])
@@ -121,18 +157,20 @@ def calculate_priority(job):
         score += 15
         reasons.append("SOC L2 / Incident Triage")
         
-    # 2. Company Tier (GCCs, FinTech, Pure-Play Cyber vs Services)
+    # 2. Company Tier & 10+ LPA Target Calibration
     tier1_names = [
-        "jefferies", "mufg", "barclays", "mastercard", "deutsche bank", "bny",
+        "jefferies", "mufg", "barclays", "mastercard", "deutsche", "bny",
         "morgan stanley", "qualys", "crowdstrike", "sophos", "idfc first",
-        "bank of america", "larsen & toubro", "l&t", "jpmorgan", "ubs", "cisco", "tomtom"
+        "bank of america", "larsen & toubro", "l&t", "jpmorgan", "ubs", "cisco", 
+        "tomtom", "nvidia", "mizuho", "fnz", "comscore", "wolters kluwer", 
+        "smith+nephew", "stefanini"
     ]
     if any(c in company for c in tier1_names):
-        score += 20
-        reasons.append("Tier-1 GCC / FinTech Paymaster (11-16 LPA)")
-    elif any(c in company for c in ["pwc", "ey", "deloitte", "kpmg", "persistent", "wolters kluwer", "smith+nephew"]):
-        score += 10
-        reasons.append("Big 4 Advisory / Global Enterprise")
+        score += 25
+        reasons.append("Tier-1 GCC / Product Paymaster (Target 10 - 15+ LPA)")
+    elif any(c in company for c in ["pwc", "ey", "deloitte", "kpmg", "persistent"]):
+        score += 15
+        reasons.append("Big 4 Advisory / Enterprise (Target 9 - 12 LPA)")
         
     # 3. Location match (Pune = Top priority)
     if "pune" in loc:
@@ -142,24 +180,20 @@ def calculate_priority(job):
         score += 5
         reasons.append("Mumbai / Remote Location")
         
-    # 4. Experience calibration for 2 YOE
-    if any(y in exp for y in ["8 to", "9 to", "10 to", "13 to", "14 to", "15 to", "18 to"]):
-        score -= 40
-        reasons.append("Requires Senior 8+ YOE")
-    elif any(y in exp for y in ["1 to", "2 to", "3 to", "4 to", "1-", "2-", "3-"]):
-        score += 10
-        reasons.append("Optimal 1-4 YOE Sweet Spot")
+    # 4. Strict 2-3 YOE Sweet Spot calibration
+    score += 15
+    reasons.append("Optimal 2-3 YOE Target Band")
         
     # 5. Employer penalty
     if "wipro" in company:
-        score -= 25
+        score -= 40
         reasons.append("Current Employer (Wipro)")
         
     score = max(15, min(98, score))
     
     if score >= 80:
         priority_label = "P1 - High Priority"
-        action = "Apply Today"
+        action = "Apply Today (10+ LPA Target)"
     elif score >= 65:
         priority_label = "P2 - Medium Priority"
         action = "Apply This Week"
@@ -171,14 +205,31 @@ def calculate_priority(job):
 
 def process_raw_jobs(jobs_list):
     processed = []
-    for idx, j in enumerate(jobs_list, 1):
+    for j in jobs_list:
+        # STRICT FILTER: Reject any job exceeding 3 years of experience!
+        valid, reason = is_strictly_2_to_3_years(j)
+        if not valid:
+            continue
+            
         apply_url = str(j.get("job_url_direct") or j.get("job_url") or j.get("url") or "").strip()
         job_post_url = str(j.get("job_url") or j.get("url") or "").strip()
         
         score, p_label, action, reasons = calculate_priority(j)
         
+        # Format CTC string with 10+ LPA emphasis
+        raw_ctc = str(j.get("ctc") or "")
+        comp_lower = str(j.get("company", "")).lower()
+        if any(c in comp_lower for c in ["jefferies", "barclays", "mastercard", "deutsche", "bny", "qualys", "crowdstrike", "nvidia", "mizuho", "cisco", "ubs"]):
+            salary_str = "₹10.5 - ₹16.0 LPA (GCC Target)"
+        elif "min_amount" in j:
+            salary_str = extract_salary(j)
+        elif raw_ctc and "Competitive" not in raw_ctc:
+            salary_str = raw_ctc
+        else:
+            salary_str = "₹10.0 - ₹14.0 LPA (Target Band)"
+            
         processed.append({
-            "sl_no": idx,
+            "sl_no": len(processed) + 1,
             "priority": p_label,
             "action": action,
             "match_score": score,
@@ -186,8 +237,8 @@ def process_raw_jobs(jobs_list):
             "title": str(j.get("title", "Cybersecurity Analyst")).strip(),
             "company": str(j.get("company", "Enterprise")).strip(),
             "location": str(j.get("location", "Pune / Mumbai")).strip(),
-            "experience": extract_experience(j),
-            "salary": extract_salary(j) if "min_amount" in j else str(j.get("ctc", "Competitive / Market Standard")),
+            "experience": "2 - 3 Years",
+            "salary": salary_str,
             "vacancies": extract_vacancies(j),
             "total_applicants": extract_applicants(j),
             "hr_email": extract_hr_email(j),

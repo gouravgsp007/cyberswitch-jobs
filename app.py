@@ -1,12 +1,15 @@
 import os
 import json
 import datetime
+from typing import Optional
 import uvicorn
+from pydantic import BaseModel
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from job_engine import process_raw_jobs, generate_excel_file, EXCEL_PATH
+from firecrawl_engine import extract_deep_job_intel, GCC_CAREER_SEEDS
 
 app = FastAPI(title="Cybersecurity Job Search & Excel Generator")
 
@@ -168,6 +171,25 @@ def scrape_and_export(
         
     jobs = get_processed_jobs()
     return {"status": "fallback", "total_jobs": len(jobs), "excel_path": "/api/download-excel"}
+
+class AnalyzeRequest(BaseModel):
+    url: str
+    api_key: Optional[str] = None
+
+@app.post("/api/analyze-job")
+def analyze_job(req: AnalyzeRequest):
+    """
+    Uses Firecrawl to extract structured intelligence from a job posting URL.
+    """
+    intel = extract_deep_job_intel(req.url, req.api_key)
+    return intel
+
+@app.get("/api/gcc-seeds")
+def get_gcc_seeds():
+    """
+    Returns curated list of direct GCC Workday / ATS career portal seeds.
+    """
+    return {"status": "success", "seeds": GCC_CAREER_SEEDS}
 
 # Mount frontend
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
