@@ -124,11 +124,11 @@ def scrape_and_export(
         print(f"Scraping fresh jobs for: {search_term} in {location}...")
         
         df = scrape_jobs(
-            site_name=["linkedin", "naukri"],
+            site_name=["indeed", "glassdoor", "linkedin", "naukri"],
             search_term=search_term,
             location=location,
             results_wanted=results_wanted,
-            hours_old=72,
+            hours_old=720,
             country_indeed='india'
         )
         
