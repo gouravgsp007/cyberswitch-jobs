@@ -2,6 +2,10 @@ import os
 import json
 import re
 from typing import Dict, Any, Optional
+from dotenv import load_dotenv
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 try:
     from firecrawl import FirecrawlApp
@@ -9,7 +13,6 @@ try:
 except ImportError:
     FIRECRAWL_AVAILABLE = False
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ENV_KEY = os.getenv("FIRECRAWL_API_KEY", "")
 
 # Curated list of direct GCC Workday / ATS seeds for Pune & Mumbai
@@ -85,51 +88,27 @@ def extract_deep_job_intel(url: str, api_key: Optional[str] = None) -> Dict[str,
     if app and url and url.startswith("http"):
         try:
             print(f"[Firecrawl] Scraping & extracting intelligence from: {url}")
+            try:
+                # Modern v2 SDK
+                scrape_result = app.scrape(url, formats=['markdown'])
+            except Exception:
+                # Fallback v1 SDK
+                scrape_result = app.scrape_url(url, params={'formats': ['markdown']})
             
-            # Firecrawl v1 extraction schema
-            extract_prompt = """
-            Extract structured hiring intelligence for a cybersecurity applicant with 2+ YOE.
-            Include:
-            1. must_have_skills: List of critical technical skills/tools (e.g. Sentinel, Palo Alto, Splunk, KQL).
-            2. preferred_certifications: List of certs mentioned (e.g. SC-200, PCNSA, CEH, CISSP).
-            3. team_role_context: The team structure or reporting hierarchy (e.g. SOC L2, CSIRT, Cyber Defense).
-            4. shift_structure: Work timings or rotational shift details.
-            5. salary_budget: Any disclosed CTC, budget, or compensation bracket.
-            6. recruiter_contact: Any HR name or application email mentioned.
-            """
-            
-            scrape_result = app.scrape_url(
-                url,
-                params={
-                    'formats': ['markdown', 'extract'],
-                    'extract': {
-                        'prompt': extract_prompt,
-                        'schema': {
-                            "type": "object",
-                            "properties": {
-                                "must_have_skills": {"type": "array", "items": {"type": "string"}},
-                                "preferred_certifications": {"type": "array", "items": {"type": "string"}},
-                                "team_role_context": {"type": "string"},
-                                "shift_structure": {"type": "string"},
-                                "salary_budget": {"type": "string"},
-                                "recruiter_contact": {"type": "string"}
-                            }
-                        }
-                    }
-                }
-            )
-            
-            if scrape_result and "extract" in scrape_result:
-                extracted = scrape_result["extract"]
-                extracted["source"] = "Firecrawl Live Web Scraping"
-                extracted["status"] = "success"
-                return extracted
-            elif scrape_result and "markdown" in scrape_result:
-                # Fallback parse the returned markdown
-                md = scrape_result["markdown"]
-                return parse_markdown_intel(md, "Firecrawl Markdown Engine")
+            md_content = ""
+            if isinstance(scrape_result, dict):
+                md_content = scrape_result.get("markdown") or scrape_result.get("content") or ""
+            elif hasattr(scrape_result, "markdown"):
+                md_content = scrape_result.markdown
+                
+            if md_content:
+                intel = parse_markdown_intel(md_content, "Firecrawl Live Web Scraping")
+                intel["status"] = "success"
+                intel["url"] = url
+                return intel
                 
         except Exception as e:
+            print(f"[Firecrawl] Live scrape failed: {e}. Falling back to heuristic analysis.")
             print(f"[Firecrawl] API call failed: {e}. Falling back to heuristic analysis.")
             
     # Fallback when no API key is provided
