@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from job_engine import process_raw_jobs, generate_excel_file, EXCEL_PATH
 from firecrawl_engine import extract_deep_job_intel, GCC_CAREER_SEEDS
+import tracker_engine
 
 app = FastAPI(title="Cybersecurity Job Search & Excel Generator")
 
@@ -149,10 +150,7 @@ def scrape_and_export(
                     added.append(item)
                     existing_urls.add(item["job_post_url"])
                     
-            combined = added + existing
-            # Re-index
-            for idx, j in enumerate(combined, 1):
-                j["sl_no"] = idx
+            combined = [{**j, "sl_no": idx} for idx, j in enumerate(added + existing, 1)]
                 
             # Save files
             with open(PROCESSED_JSON, "w", encoding="utf-8") as f:
@@ -172,6 +170,50 @@ def scrape_and_export(
     jobs = get_processed_jobs()
     return {"status": "fallback", "total_jobs": len(jobs), "excel_path": "/api/download-excel"}
 
+@app.post("/api/sync-workday-ats")
+def sync_workday_ats():
+    """
+    Crawls direct Workday CXS & Greenhouse ATS feeds from verified GCC paymasters (Mastercard, NVIDIA, CrowdStrike, etc.).
+    Filters strictly for 2-3 YOE, detects Ghost Jobs, and merges into active database and Excel.
+    """
+    try:
+        import workday_engine
+        direct_jobs = workday_engine.crawl_all_direct_ats_jobs()
+        if direct_jobs:
+            existing = get_processed_jobs()
+            existing_urls = {j.get("job_post_url") or j.get("apply_url") for j in existing if j.get("job_post_url") or j.get("apply_url")}
+            existing_titles_comp = {f"{j.get('title', '').lower()}_{j.get('company', '').lower()}" for j in existing}
+            
+            new_processed = process_raw_jobs(direct_jobs)
+            added = []
+            for item in new_processed:
+                u = item.get("job_post_url") or item.get("apply_url")
+                tc = f"{item.get('title', '').lower()}_{item.get('company', '').lower()}"
+                if u not in existing_urls and tc not in existing_titles_comp:
+                    added.append(item)
+                    if u: existing_urls.add(u)
+                    existing_titles_comp.add(tc)
+                    
+            combined = [{**j, "sl_no": idx} for idx, j in enumerate(added + existing, 1)]
+                
+            with open(PROCESSED_JSON, "w", encoding="utf-8") as f:
+                json.dump(combined, f, indent=2)
+                
+            generate_excel_file(combined, EXCEL_PATH)
+            
+            return {
+                "status": "success",
+                "new_added": len(added),
+                "total_jobs": len(combined),
+                "excel_path": "/api/download-excel"
+            }
+    except Exception as e:
+        print(f"ATS sync error: {e}")
+        return {"status": "error", "message": str(e)}
+        
+    jobs = get_processed_jobs()
+    return {"status": "success", "new_added": 0, "total_jobs": len(jobs), "excel_path": "/api/download-excel"}
+
 class AnalyzeRequest(BaseModel):
     url: str
     api_key: Optional[str] = None
@@ -190,6 +232,57 @@ def get_gcc_seeds():
     Returns curated list of direct GCC Workday / ATS career portal seeds.
     """
     return {"status": "success", "seeds": GCC_CAREER_SEEDS}
+
+# ==================== KANBAN APPLICATION TRACKER ENDPOINTS ====================
+
+class AddTrackerRequest(BaseModel):
+    job: dict
+    stage: Optional[str] = "wishlist"
+
+class UpdateStageRequest(BaseModel):
+    id: str
+    stage: str
+    note: Optional[str] = ""
+
+class UpdateNotesRequest(BaseModel):
+    id: str
+    notes: str
+    referral_contact: Optional[str] = ""
+
+@app.get("/api/tracker")
+def get_tracker():
+    """Returns all tracked jobs grouped by Kanban stage."""
+    return tracker_engine.get_tracker_summary()
+
+@app.post("/api/tracker/add")
+def add_to_tracker(req: AddTrackerRequest):
+    """Adds an opening directly to the Kanban tracker."""
+    result = tracker_engine.add_job_to_tracker(req.job, initial_stage=req.stage or "wishlist")
+    return result
+
+@app.post("/api/tracker/update-stage")
+def update_tracker_stage(req: UpdateStageRequest):
+    """Moves an application to a new Kanban stage."""
+    updated = tracker_engine.update_job_stage(req.id, req.stage, req.note or "")
+    if not updated:
+        raise HTTPException(status_code=400, detail="Invalid stage or job ID")
+    return {"status": "success", "item": updated}
+
+@app.post("/api/tracker/update-notes")
+def update_tracker_notes(req: UpdateNotesRequest):
+    """Updates personal strategy notes and referral contact."""
+    updated = tracker_engine.update_job_notes(req.id, req.notes, req.referral_contact or "")
+    if not updated:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {"status": "success", "item": updated}
+
+@app.delete("/api/tracker/{track_id}")
+def delete_tracker_item(track_id: str):
+    """Deletes an application from the tracker."""
+    success = tracker_engine.delete_tracker_job(track_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {"status": "success", "id": track_id}
 
 @app.get("/")
 def serve_index():

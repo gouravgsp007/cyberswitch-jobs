@@ -7,3 +7,4 @@ env/
 venv/
 .system_generated/
 *.log
+.github/

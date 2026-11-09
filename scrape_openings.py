@@ -164,8 +164,29 @@ for i, q in enumerate(queries, 1):
     # Politeness jitter between searches
     time.sleep(random.uniform(1.5, 2.5))
 
+# Run Direct ATS Crawler (Workday CXS + Greenhouse APIs)
+try:
+    import workday_engine
+    print("\n" + "="*65)
+    print("Executing Direct Workday ATS & Greenhouse GCC Ingestion...")
+    print("="*65)
+    direct_ats_jobs = workday_engine.crawl_all_direct_ats_jobs()
+    ats_added = 0
+    for j in direct_ats_jobs:
+        u = j.get("url", "")
+        tc = f"{j.get('title', '').lower()}_{j.get('company', '').lower()}"
+        if u in seen_urls or tc in seen_titles_companies:
+            continue
+        if u: seen_urls.add(u)
+        seen_titles_companies.add(tc)
+        all_jobs.append(j)
+        ats_added += 1
+    print(f" -> Merged {ats_added} fresh Direct Workday / ATS requisitions.")
+except Exception as e:
+    print(f" -> Notice during Direct ATS sync: {e}")
+
 print("\n" + "="*65)
-print(f"Scrape Complete! Added {new_added_count} new postings.")
+print(f"Scrape Complete! Added {new_added_count} portal postings + {ats_added if 'ats_added' in locals() else 0} direct ATS postings.")
 print(f"Total Unique Job Database Size: {len(all_jobs)} jobs.")
 print("="*65)
 

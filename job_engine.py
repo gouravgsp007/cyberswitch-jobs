@@ -38,7 +38,8 @@ def extract_salary(row):
 
 SENIOR_KEYWORDS = [
     'senior', 'sr.', 'sr ', 'lead', 'principal', 'architect', 'manager', 'director', 
-    'head', 'staff', 'avp', 'vp ', 'expert', 'specialist iii', 'specialist ii', 
+    'head', 'staff', 'vice president', 'assistant vice president', 
+    'chief', 'ciso', 'expert', 'specialist iii', 'specialist ii', 
     'level 3', 'level 4', 'tier 3', 'team lead', 'l3', 'l4', 'consultant ii', 'tech lead'
 ]
 
@@ -53,6 +54,10 @@ def is_strictly_2_to_3_years(job):
     # 1. Reject if title explicitly states Senior, Lead, Principal, Manager, Architect, etc.
     if any(k in title for k in SENIOR_KEYWORDS):
         return False, "Senior/Lead Title"
+
+    # Reject VP, AVP, CISO or Senior Officer via word boundaries
+    if re.search(r'\b(?:vp|avp|ciso|senior\s+officer|chief.+officer)\b', title):
+        return False, "Senior/Executive Title"
         
     # 2. Check year ranges: any range with upper bound > 3 is strictly rejected
     ranges = re.findall(r'(\d+)\s*(?:-|to)\s*(\d+)\s*(?:years?|yrs?)', desc)
@@ -163,14 +168,31 @@ def calculate_priority(job):
         "morgan stanley", "qualys", "crowdstrike", "sophos", "idfc first",
         "bank of america", "larsen & toubro", "l&t", "jpmorgan", "ubs", "cisco", 
         "tomtom", "nvidia", "mizuho", "fnz", "comscore", "wolters kluwer", 
-        "smith+nephew", "stefanini"
+        "smith+nephew", "stefanini", "state street", "fiserv", "adobe", "hp",
+        "cloudflare", "datadog", "okta", "elastic", "target"
     ]
     if any(c in company for c in tier1_names):
         score += 25
         reasons.append("Tier-1 GCC / Product Paymaster (Target 10 - 15+ LPA)")
-    elif any(c in company for c in ["pwc", "ey", "deloitte", "kpmg", "persistent"]):
+    elif any(c in company for c in ["pwc", "ey", "deloitte", "kpmg", "persistent", "accenture"]):
         score += 15
         reasons.append("Big 4 Advisory / Enterprise (Target 9 - 12 LPA)")
+
+    # 3. Direct ATS Verification Bonus
+    source_lower = str(job.get("source", "") or job.get("site", "")).lower()
+    if any(k in source_lower for k in ["workday", "greenhouse", "direct gcc", "direct ats"]):
+        score += 15
+        reasons.append("Direct ATS Ground Truth (Zero Middlemen)")
+
+    # 4. Ghost-Job Signal Heuristic (FreeHire)
+    ghost_risk = str(job.get("ghost_job_risk", ""))
+    ghost_note = str(job.get("ghost_job_note", "")).lower()
+    if "high" in ghost_risk.lower() or "stale" in ghost_note:
+        score -= 20
+        reasons.append("⚠️ Stale Posting Risk (>35d)")
+    elif "fresh" in ghost_note or "low risk" in ghost_risk.lower():
+        score += 10
+        reasons.append("🔥 Fresh Direct Requisition")
         
     # 3. Location match (Pune = Top priority)
     if "pune" in loc:
@@ -244,16 +266,18 @@ def process_raw_jobs(jobs_list):
             "hr_email": extract_hr_email(j),
             "apply_url": apply_url if apply_url else job_post_url,
             "job_post_url": job_post_url,
-            "source": str(j.get("site") or j.get("source") or "Portal").capitalize(),
-            "date_posted": str(j.get("date_posted") or j.get("posted") or "Recent").strip()
+            "source": str(j.get("source") or j.get("site") or "Portal"),
+            "date_posted": str(j.get("date_posted") or j.get("posted") or "Recent").strip(),
+            "ghost_job_risk": j.get("ghost_job_risk", "Low Risk"),
+            "ghost_job_note": j.get("ghost_job_note", "Active Requisition"),
+            "ats_provider": j.get("ats_provider", "")
         })
         
     # Sort automatically by Match Score descending (P1 at top!)
     processed.sort(key=lambda x: x["match_score"], reverse=True)
     
-    # Re-index sl_no
-    for i, p in enumerate(processed, 1):
-        p["sl_no"] = i
+    # Re-index sl_no immutably
+    processed = [{**p, "sl_no": i} for i, p in enumerate(processed, 1)]
         
     return processed
 
