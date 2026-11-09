@@ -12,24 +12,10 @@
   <script src="/xlsx.full.min.js"></script>
   <!-- CyberSwitch Application Tracker Engine -->
   <script src="/tracker.js"></script>
+  <!-- Phase 3, 4, 5: CV Tracers, Alerts, Anti-Hallucination CV Tailor -->
+  <script src="/cv_tools.js"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            cyber: {
-              bg: '#080c16',
-              card: '#0f172a',
-              border: '#1e293b',
-              accent: '#06b6d4',
-              emerald: '#10b981',
-              excel: '#107c41'
-            }
-          }
-        }
-      }
-    }
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { cyber: { bg: '#080c16', card: '#0f172a', border: '#1e293b', accent: '#06b6d4', emerald: '#10b981', excel: '#107c41' } } } } };
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -86,6 +72,15 @@
           <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
           <span>Kanban Tracker</span>
           <span id="nav-tracker-count" class="px-1.5 py-0.5 rounded-full text-[9px] bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono hidden">0</span>
+        </button>
+        <button onclick="openTracerModal()" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 shadow" title="CV Tracer Links - Resume Read Receipts">
+          <i data-lucide="link" class="w-3.5 h-3.5 text-purple-400"></i>
+          <span>🔗 CV Tracers</span>
+        </button>
+        <button onclick="openAlertCenter()" class="relative px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 shadow" title="10+ LPA Instant Job Alerts & Telegram Settings">
+          <i data-lucide="bell" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>🔔 Alerts</span>
+          <span id="nav-alert-badge" class="hidden px-1.5 py-0.2 rounded-full text-[9px] bg-rose-600 text-white font-mono font-bold">0</span>
         </button>
       </div>
 
@@ -382,6 +377,9 @@
                   <i data-lucide="kanban" class="w-3 h-3"></i>
                   <span>Track</span>
                 </button>
+                <button onclick="openCvTailorModal('${safeCompany}', '${safeTitle}', '${encodeURIComponent(j.priority_reasons || '')}', '${safeApply}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-950 hover:bg-indigo-900 border border-indigo-700 hover:border-indigo-500 text-indigo-300 font-sans font-bold text-xs shadow flex items-center space-x-1 transition cursor-pointer" title="Tailor 100% Truthful STAR Bullets and Referral DM">
+                  <span>🎯 Tailor</span>
+                </button>
                 <button onclick="openIntelModal('${safeApply}', '${safeTitle}', '${safeCompany}')" class="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-sans font-bold text-xs shadow-md shadow-purple-600/30 flex items-center space-x-1 transition cursor-pointer" title="Extract Deep Intel via Firecrawl">
                   <span>✨ AI Intel</span>
                 </button>
@@ -467,13 +465,17 @@
               <span>${j.total_applicants}</span>
             </div>
 
-            <div class="grid grid-cols-4 gap-1.5 pt-1">
-              <button onclick="trackJobBySlNo(${j.sl_no})" class="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 text-xs font-bold text-center flex items-center justify-center space-x-1" title="Add to Kanban Tracker">
+            <div class="grid grid-cols-5 gap-1 pt-1">
+              <button onclick="trackJobBySlNo(${j.sl_no})" class="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 text-xs font-bold text-center flex items-center justify-center space-x-0.5" title="Add to Kanban Tracker">
                 <i data-lucide="kanban" class="w-3 h-3"></i>
                 <span>Track</span>
               </button>
 
-              <button onclick="openIntelModal('${safeApply}', '${safeTitle}', '${safeCompany}')" class="py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold text-center flex items-center justify-center space-x-1 shadow-md shadow-purple-600/30 transition">
+              <button onclick="openCvTailorModal('${safeCompany}', '${safeTitle}', '${encodeURIComponent(j.priority_reasons || '')}', '${safeApply}')" class="py-2 rounded-lg bg-indigo-950 hover:bg-indigo-900 border border-indigo-700 text-indigo-300 text-xs font-bold text-center flex items-center justify-center space-x-0.5" title="Tailor Bullets & DM">
+                <span>🎯 Tailor</span>
+              </button>
+
+              <button onclick="openIntelModal('${safeApply}', '${safeTitle}', '${safeCompany}')" class="py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold text-center flex items-center justify-center space-x-0.5 shadow-md shadow-purple-600/30 transition">
                 <span>✨ Intel</span>
               </button>
 

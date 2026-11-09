@@ -1,0 +1,30 @@
+{
+  "links": [
+    {
+      "id": "trklink_2e2eecb4",
+      "slug": "barclays-technology-centre-linkedin",
+      "company": "Barclays Technology Centre",
+      "role": "Cybersecurity Analyst",
+      "destination_key": "linkedin",
+      "destination_url": "https://www.linkedin.com/in/gourav-parit/",
+      "tracking_path": "/t/barclays-technology-centre-linkedin",
+      "created_at": "2026-11-09 14:16:51",
+      "total_clicks": 1,
+      "last_clicked": "2026-11-09 14:16:51",
+      "recent_clicks": [
+        {
+          "id": "clk_996d27d6",
+          "slug": "barclays-technology-centre-linkedin",
+          "company": "Barclays Technology Centre",
+          "role": "Cybersecurity Analyst",
+          "destination_key": "linkedin",
+          "timestamp": "2026-11-09 14:16:51",
+          "device_type": "Desktop",
+          "user_agent": "testclient",
+          "client_ip": "testclient",
+          "referrer": "Direct / PDF Resume"
+        }
+      ]
+    }
+  ]
+}

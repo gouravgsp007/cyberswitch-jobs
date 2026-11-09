@@ -1,0 +1,16 @@
+{
+  "clicks": [
+    {
+      "id": "clk_996d27d6",
+      "slug": "barclays-technology-centre-linkedin",
+      "company": "Barclays Technology Centre",
+      "role": "Cybersecurity Analyst",
+      "destination_key": "linkedin",
+      "timestamp": "2026-11-09 14:16:51",
+      "device_type": "Desktop",
+      "user_agent": "testclient",
+      "client_ip": "testclient",
+      "referrer": "Direct / PDF Resume"
+    }
+  ]
+}

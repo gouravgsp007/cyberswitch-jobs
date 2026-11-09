@@ -1,0 +1,165 @@
+[
+  {
+    "id": "exp_sentinel_01",
+    "category": "Microsoft Sentinel & KQL",
+    "keywords": [
+      "sentinel",
+      "kql",
+      "azure",
+      "entra",
+      "detection",
+      "analytics",
+      "hunting"
+    ],
+    "impact_score": 96,
+    "bullet": "Architected and tuned 25+ KQL analytics rules in Microsoft Sentinel to detect credential stuffing, Entra ID token theft, and lateral movement, reducing false positives by 42%.",
+    "star_story": {
+      "situation": "High false-positive rate from native Azure sign-in alerts overloading the SOC L1 triage queue.",
+      "task": "Build customized KQL detection logic to isolate high-risk sign-ins and correlate with Defender for Endpoint signals.",
+      "action": "Engineered multi-table KQL joins across SigninLogs, AADNonInteractiveUserSignInLogs, and DeviceNetworkEvents with anomaly baselining.",
+      "result": "Reduced false-positive noise by 42% and caught 3 distinct unauthorized OAuth app consent grants within 15 minutes of occurrence."
+    }
+  },
+  {
+    "id": "exp_sentinel_02",
+    "category": "Microsoft Sentinel & KQL",
+    "keywords": [
+      "sentinel",
+      "playbooks",
+      "logic apps",
+      "automation",
+      "soar",
+      "mttr"
+    ],
+    "impact_score": 93,
+    "bullet": "Automated SOC L2 incident triage playbooks via Azure Logic Apps, enabling instant host isolation and IP blocking that cut Mean Time to Remediate (MTTR) by 35%.",
+    "star_story": {
+      "situation": "Manual IP containment on border firewalls took an average of 45 minutes during off-peak hours.",
+      "task": "Automate response playbooks triggered directly by high-severity Sentinel incidents.",
+      "action": "Built Logic App connectors integrating Sentinel with Palo Alto Panorama and Microsoft Defender for Endpoint APIs.",
+      "result": "Automated initial containment to under 90 seconds, freeing up 20+ hours of analyst time weekly."
+    }
+  },
+  {
+    "id": "exp_mde_03",
+    "category": "Microsoft Defender for Endpoint (MDE)",
+    "keywords": [
+      "defender",
+      "mde",
+      "edr",
+      "endpoint",
+      "live response",
+      "ioc",
+      "malware"
+    ],
+    "impact_score": 91,
+    "bullet": "Executed deep-dive threat hunting and malware investigations across 12,000+ endpoints using Microsoft Defender for Endpoint (MDE) Live Response, memory inspection, and timeline triage.",
+    "star_story": {
+      "situation": "A workstation flagged anomalous PowerShell script execution with disguised base64 payloads.",
+      "task": "Determine root cause, scope of compromise, and prevent lateral spread.",
+      "action": "Initiated Live Response session, isolated machine, dumped process memory, decoded obfuscated script, and identified living-off-the-land binary (LOLBin) usage.",
+      "result": "Blocked command-and-control IP enterprise-wide and issued a remediation advisory before any data staging occurred."
+    }
+  },
+  {
+    "id": "exp_palo_01",
+    "category": "Palo Alto NGFW & Panorama",
+    "keywords": [
+      "palo alto",
+      "panorama",
+      "ngfw",
+      "security policies",
+      "nat",
+      "decryption"
+    ],
+    "impact_score": 95,
+    "bullet": "Administered enterprise Palo Alto Next-Gen Firewalls (PA-3200 & PA-5200 series) via Panorama, managing Security Policies, Decryption, and NAT rules across segmented corporate zones.",
+    "star_story": {
+      "situation": "Corporate perimeter needed strict micro-segmentation to comply with ISO 27001 and RBI cyber security frameworks.",
+      "task": "Migrate legacy port-based policies into zero-trust application-based rules without breaking production traffic.",
+      "action": "Audited traffic using Panorama Policy Optimizer, converted legacy Any-Any rules to App-ID specific policies with App-ID adoption.",
+      "result": "Zero downtime migration across 140+ policy rules, reducing attack surface by 60%."
+    }
+  },
+  {
+    "id": "exp_palo_02",
+    "category": "Palo Alto NGFW & Panorama",
+    "keywords": [
+      "wildfire",
+      "threat prevention",
+      "app-id",
+      "user-id",
+      "url filtering",
+      "c2"
+    ],
+    "impact_score": 92,
+    "bullet": "Configured and maintained Palo Alto Security Profiles (Antivirus, Anti-Spyware with DNS Sinkholing, Vulnerability Protection, and WildFire) blocking 100% of detected C2 beaconing attempts.",
+    "star_story": {
+      "situation": "DNS-tunneling malware variants attempting C2 exfiltration across egress gateways.",
+      "task": "Enforce strict DNS sinkholing and real-time WildFire threat intelligence feeds.",
+      "action": "Activated Palo Alto DNS Security, sinkholed malicious domains to internal loopback, and tuned anti-spyware profiles for strict blocking.",
+      "result": "Blocked over 1,200 malicious connection attempts in Q3 alone with full attribution via User-ID."
+    }
+  },
+  {
+    "id": "exp_nsx_01",
+    "category": "VMware NSX",
+    "keywords": [
+      "nsx",
+      "vmware",
+      "micro-segmentation",
+      "east-west",
+      "virtualization",
+      "distributed firewall"
+    ],
+    "impact_score": 88,
+    "bullet": "Enforced East-West micro-segmentation policies using VMware NSX Distributed Firewall (DFW) and Security Groups, preventing unauthorized lateral movement within virtualized datacenter clusters.",
+    "star_story": {
+      "situation": "Flat virtual network allowed internal VM-to-VM traversal between development and staging environments.",
+      "task": "Implement zero-trust security tagging and distributed firewall filtering at the virtual NIC level.",
+      "action": "Mapped application dependency flows, applied NSX security tags, and defined least-privilege DFW rules.",
+      "result": "Isolated PCI-DSS and sensitive workload clusters with zero impact on legitimate application performance."
+    }
+  },
+  {
+    "id": "exp_splunk_01",
+    "category": "Splunk SIEM (SPL)",
+    "keywords": [
+      "splunk",
+      "spl",
+      "siem",
+      "correlation",
+      "dashboards",
+      "data models"
+    ],
+    "impact_score": 94,
+    "bullet": "Authored advanced Splunk SPL queries, correlation searches, and executive security dashboards ingesting 2.5+ TB daily logs from Windows Event Logs, Sysmon, and proxy appliances.",
+    "star_story": {
+      "situation": "SOC analysts lacked visibility into anomalous service creations (Event ID 7045) across tier-0 domain controllers.",
+      "task": "Build high-fidelity Splunk correlation searches with automated alert dispatching.",
+      "action": "Constructed optimized SPL searches leveraging tstats and CIM-compliant data models for sub-second execution across massive index clusters.",
+      "result": "Detected 100% of unauthorized service installations with zero pipeline latency."
+    }
+  },
+  {
+    "id": "exp_soc_01",
+    "category": "SOC L2 Incident Response",
+    "keywords": [
+      "soc",
+      "incident response",
+      "mitre",
+      "nist",
+      "forensics",
+      "triage",
+      "escalation"
+    ],
+    "impact_score": 97,
+    "bullet": "Spearheaded SOC L2 incident triage and forensic containment for P1/P2 incidents adhering to NIST SP 800-61 and mapping threat actor TTPs directly to the MITRE ATT&CK matrix.",
+    "star_story": {
+      "situation": "Critical ransomware precursor alert triggered across an internal database server cluster.",
+      "task": "Coordinate immediate containment, trace patient zero, and prevent payload deployment.",
+      "action": "Invoked incident response protocol, isolated affected VLAN via firewall rule override, retrieved artifact memory dumps, and sanitized persistence registry keys.",
+      "result": "Prevented data encryption with zero data loss; delivered post-mortem report to CISO within 4 hours."
+    }
+  }
+]

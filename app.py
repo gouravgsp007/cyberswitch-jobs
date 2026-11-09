@@ -4,13 +4,16 @@ import datetime
 from typing import Optional
 import uvicorn
 from pydantic import BaseModel
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from job_engine import process_raw_jobs, generate_excel_file, EXCEL_PATH
 from firecrawl_engine import extract_deep_job_intel, GCC_CAREER_SEEDS
 import tracker_engine
+import tracer_links_engine
+import experience_bank
+import alert_engine
 
 app = FastAPI(title="Cybersecurity Job Search & Excel Generator")
 
@@ -156,6 +159,13 @@ def scrape_and_export(
             with open(PROCESSED_JSON, "w", encoding="utf-8") as f:
                 json.dump(combined, f, indent=2)
                 
+            if added:
+                try:
+                    for nj in added[:5]:
+                        alert_engine.trigger_job_alert(nj)
+                except Exception:
+                    pass
+                
             generate_excel_file(combined, EXCEL_PATH)
             
             return {
@@ -283,6 +293,115 @@ def delete_tracker_item(track_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Job not found")
     return {"status": "success", "id": track_id}
+
+class CreateTracerLinkRequest(BaseModel):
+    company: str
+    role: Optional[str] = "Cybersecurity Analyst"
+    destination_key: Optional[str] = "linkedin"
+    custom_url: Optional[str] = None
+
+class TailorCVRequest(BaseModel):
+    company: str
+    title: str
+    description: str
+    tracer_url: Optional[str] = None
+
+class AlertConfigRequest(BaseModel):
+    telegram_bot_token: str
+    telegram_chat_id: str
+    enabled: bool = True
+
+# ==========================================
+# Phase 3: CV Tracer Links (Read Receipts)
+# ==========================================
+@app.get("/api/tracer-links")
+def get_tracer_links_endpoint():
+    """Returns all generated CV tracer links and recruiter engagement statistics."""
+    return tracer_links_engine.get_tracer_stats()
+
+@app.post("/api/tracer-links/create")
+def create_tracer_link_endpoint(req: CreateTracerLinkRequest):
+    """Generates a unique tracked URL for a company application."""
+    return tracer_links_engine.create_tracer_link(
+        company=req.company,
+        role=req.role or "Cybersecurity Analyst",
+        destination_key=req.destination_key or "linkedin",
+        custom_url=req.custom_url
+    )
+
+@app.get("/t/{slug}")
+def redirect_tracer_link_endpoint(slug: str, request: Request):
+    """Logs recruiter click event and redirects to candidate destination (LinkedIn/Credly)."""
+    user_agent = request.headers.get("user-agent", "Unknown")
+    client_ip = request.client.host if request.client else "Unknown"
+    referrer = request.headers.get("referer", "")
+    dest = tracer_links_engine.record_tracer_click(slug, user_agent, client_ip, referrer)
+    if not dest:
+        raise HTTPException(status_code=404, detail="Tracer link not found or expired")
+    return RedirectResponse(url=dest, status_code=302)
+
+# ==========================================
+# Phase 4: Instant Alert Engine
+# ==========================================
+@app.get("/api/alerts")
+def get_alerts_endpoint():
+    """Returns recent 10-15 LPA job alerts and unread count."""
+    return alert_engine.get_alerts()
+
+@app.post("/api/alerts/mark-read")
+def mark_alerts_read_endpoint():
+    """Marks all active alerts as read."""
+    return alert_engine.mark_all_alerts_read()
+
+@app.get("/api/alerts/config")
+def get_alerts_config_endpoint():
+    """Returns Telegram / notification settings."""
+    return alert_engine.get_alert_config()
+
+@app.post("/api/alerts/config")
+def update_alerts_config_endpoint(req: AlertConfigRequest):
+    """Updates Telegram bot token and chat ID."""
+    return alert_engine.update_alert_config(
+        bot_token=req.telegram_bot_token,
+        chat_id=req.telegram_chat_id,
+        enabled=req.enabled
+    )
+
+@app.post("/api/alerts/test")
+def test_alert_endpoint():
+    """Triggers a sample 10+ LPA P1 alert for testing."""
+    sample = {
+        "title": "SOC Analyst L2 (Incident Response)",
+        "company": "Barclays Technology Centre",
+        "location": "Pune, Maharashtra",
+        "salary": "₹12.0 - ₹16.0 LPA",
+        "experience": "2 - 3 Years",
+        "priority": "P1 - High Priority",
+        "apply_url": "https://barclays.wd3.myworkdayjobs.com",
+        "source": "Direct Workday ATS"
+    }
+    return alert_engine.trigger_job_alert(sample)
+
+# ==========================================
+# Phase 5: Experience Bank & CV Tailor
+# ==========================================
+@app.get("/api/experience-bank")
+def get_experience_bank_endpoint():
+    """Returns Gourav's verified accomplishments database."""
+    return {
+        "status": "success",
+        "items": experience_bank.load_experience_bank()
+    }
+
+@app.post("/api/experience-bank/tailor")
+def tailor_experience_endpoint(req: TailorCVRequest):
+    """Matches JD against verified accomplishments for anti-hallucination resume tailoring."""
+    return experience_bank.tailor_for_job(
+        company=req.company,
+        title=req.title,
+        description=req.description,
+        user_tracer_url=req.tracer_url
+    )
 
 @app.get("/")
 def serve_index():
