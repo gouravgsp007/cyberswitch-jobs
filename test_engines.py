@@ -8,6 +8,10 @@ import workday_engine
 import tracer_links_engine
 import experience_bank
 import alert_engine
+import autofill_engine
+import email_sync_engine
+import salary_intel_engine
+import interview_copilot_engine
 
 class TestEngines(unittest.TestCase):
     def setUp(self):
@@ -26,11 +30,24 @@ class TestEngines(unittest.TestCase):
         self.orig_alerts_file = alert_engine.ALERTS_FILE
         alert_engine.ALERTS_FILE = os.path.join(self.test_dir, "test_alerts.json")
 
+        # Isolate autofill profile
+        self.orig_profile_file = autofill_engine.PROFILE_FILE
+        autofill_engine.PROFILE_FILE = os.path.join(self.test_dir, "test_candidate_profile.json")
+
+        # Isolate email sync
+        self.orig_emails_file = email_sync_engine.EMAILS_FILE
+        self.orig_email_cfg_file = email_sync_engine.CONFIG_FILE
+        email_sync_engine.EMAILS_FILE = os.path.join(self.test_dir, "test_synced_emails.json")
+        email_sync_engine.CONFIG_FILE = os.path.join(self.test_dir, "test_email_sync_config.json")
+
     def tearDown(self):
         tracker_engine.TRACKER_JSON_PATH = self.orig_path
         tracer_links_engine.LINKS_FILE = self.orig_links_file
         tracer_links_engine.CLICKS_FILE = self.orig_clicks_file
         alert_engine.ALERTS_FILE = self.orig_alerts_file
+        autofill_engine.PROFILE_FILE = self.orig_profile_file
+        email_sync_engine.EMAILS_FILE = self.orig_emails_file
+        email_sync_engine.CONFIG_FILE = self.orig_email_cfg_file
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
@@ -158,6 +175,105 @@ class TestEngines(unittest.TestCase):
         # Mark read
         mr_res = alert_engine.mark_all_alerts_read()
         self.assertEqual(mr_res["unread_count"], 0)
+
+    def test_autofill_engine(self):
+        # 1. Load default profile
+        profile = autofill_engine.load_candidate_profile()
+        self.assertEqual(profile["first_name"], "Gourav")
+        self.assertEqual(profile["current_company"], "Wipro")
+        self.assertIn("SC-200", profile["certifications"])
+
+        # 2. Update profile
+        profile["expected_ctc"] = "14 - 16 LPA"
+        autofill_engine.save_candidate_profile(profile)
+        reloaded = autofill_engine.load_candidate_profile()
+        self.assertEqual(reloaded["expected_ctc"], "14 - 16 LPA")
+
+        # 3. Bookmarklet generation
+        code = autofill_engine.get_bookmarklet_code("http://localhost:8000")
+        self.assertTrue(code.startswith("javascript:"))
+        self.assertIn("http://localhost:8000", code)
+        self.assertIn("legalNameSection_firstName", code)
+
+    def test_email_sync_engine(self):
+        # 1. Pre-track a job for Barclays in tracker
+        job = {
+            "id": "barclays_sec_1",
+            "title": "SOC Analyst",
+            "company": "Barclays",
+            "location": "Pune",
+            "salary": "₹12.0 - ₹15.0 LPA",
+            "apply_url": "https://barclays.example/job/1"
+        }
+        add_res = tracker_engine.add_job_to_tracker(job, initial_stage="applied")
+        track_id = add_res["item"]["id"]
+
+        # 2. Parse recruiter invite email
+        invite_email = (
+            "Hi Gourav,\n\n"
+            "Thank you for applying to Barclays. We are impressed by your Microsoft Sentinel and SC-200 profile.\n"
+            "We would like to invite you for a Technical Round with our Incident Response Lead.\n\n"
+            "Please join via Microsoft Teams: https://teams.microsoft.com/l/meetup-join/19-meeting_12345\n\n"
+            "Best regards,\nBarclays Talent Acquisition"
+        )
+        sync_res = email_sync_engine.parse_and_sync_recruiter_message(invite_email, "recruiter@barclays.com")
+        self.assertEqual(sync_res["status"], "success")
+        ev = sync_res["event"]
+        self.assertEqual(ev["company"], "Barclays")
+        self.assertEqual(ev["detected_stage"], "technical")
+        self.assertIn("teams.microsoft.com", ev["meeting_link"])
+        self.assertTrue(ev["applied_to_tracker"])
+
+        # Verify Kanban stage progressed to technical
+        tr_data = tracker_engine.load_tracker_data()
+        updated_job = next(it for it in tr_data if it["id"] == track_id)
+        self.assertEqual(updated_job["stage"], "technical")
+
+        # 3. Parse rejection email
+        reject_email = (
+            "Dear Candidate,\n\n"
+            "Thank you for your interest in the Security Operations role at Mastercard. "
+            "Unfortunately, we have decided to pursue other candidates whose profiles align more closely at this time.\n"
+            "We wish you success in your job search."
+        )
+        rej_res = email_sync_engine.parse_and_sync_recruiter_message(reject_email, "careers@mastercard.com")
+        self.assertEqual(rej_res["event"]["detected_stage"], "rejected")
+        self.assertEqual(rej_res["event"]["company"], "Mastercard")
+
+    def test_salary_intel_engine(self):
+        benchmarks = salary_intel_engine.get_market_benchmarks()
+        self.assertGreaterEqual(len(benchmarks), 5)
+        barclays = next(b for b in benchmarks if b["company"] == "Barclays")
+        self.assertGreaterEqual(barclays["min_ctc_lpa"], 10.0)
+        self.assertEqual(barclays["yoe_bracket"], "2 - 3 Years")
+
+        # Test CTC breakdown for 13.5 LPA
+        breakdown = salary_intel_engine.calculate_ctc_breakdown(13.5, fixed_pct=0.85)
+        self.assertEqual(breakdown["target_ctc_lpa"], 13.5)
+        self.assertAlmostEqual(breakdown["fixed_lpa"], 11.48, delta=0.05)
+        self.assertGreater(breakdown["estimated_inhand_monthly_inr"], 65000)
+        self.assertGreater(breakdown["hike_over_4lpa_pct"], 200.0)
+
+        # Test negotiation playbook
+        playbook = salary_intel_engine.get_negotiation_playbook()
+        self.assertGreaterEqual(len(playbook), 3)
+        self.assertIn("Wipro", playbook[0]["verbatim_script"])
+
+    def test_interview_copilot_engine(self):
+        # 1. KQL cheat sheet
+        kql_list = interview_copilot_engine.get_kql_cheatsheet()
+        self.assertGreaterEqual(len(kql_list), 4)
+        has_lsass = any("lsass" in q["kql"].lower() for q in kql_list)
+        self.assertTrue(has_lsass)
+
+        # 2. Palo Alto troubleshooting
+        pa_list = interview_copilot_engine.get_palo_alto_troubleshooting()
+        self.assertGreaterEqual(len(pa_list), 3)
+
+        # 3. Interview coaching Q&A
+        qa_list = interview_copilot_engine.get_interview_coaching()
+        self.assertGreaterEqual(len(qa_list), 3)
+        self.assertIn("Sentinel", qa_list[0]["star_response"])
 
 if __name__ == "__main__":
     unittest.main()

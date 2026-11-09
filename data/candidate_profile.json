@@ -1,0 +1,19 @@
+{
+  "first_name": "Gourav",
+  "last_name": "Parit",
+  "full_name": "Gourav Pandit Parit",
+  "email": "gourav.gsp07@gmail.com",
+  "phone": "+91 9785384957",
+  "city": "Pune",
+  "postal_code": "411057",
+  "current_company": "Wipro",
+  "current_title": "Cybersecurity Analyst (SOC L2)",
+  "years_experience": "2.5",
+  "current_ctc": "4 LPA",
+  "expected_ctc": "12 - 15 LPA",
+  "linkedin_url": "https://www.linkedin.com/in/gourav-parit-09154313b/",
+  "github_url": "https://github.com/gouravgsp007",
+  "portfolio_url": "https://www.credly.com/users/gourav-parit/",
+  "certifications": "Microsoft Certified: Security Operations Analyst Associate (SC-200)",
+  "primary_skills": "Microsoft Sentinel, KQL, Microsoft Defender for Endpoint (MDE), Palo Alto NGFW, Panorama, Splunk SIEM, VMware NSX, SOC L2 Incident Triage, MITRE ATT&CK"
+}

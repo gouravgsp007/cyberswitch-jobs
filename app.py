@@ -14,6 +14,10 @@ import tracker_engine
 import tracer_links_engine
 import experience_bank
 import alert_engine
+import autofill_engine
+import email_sync_engine
+import salary_intel_engine
+import interview_copilot_engine
 
 app = FastAPI(title="Cybersecurity Job Search & Excel Generator")
 
@@ -402,6 +406,103 @@ def tailor_experience_endpoint(req: TailorCVRequest):
         description=req.description,
         user_tracer_url=req.tracer_url
     )
+
+class ParseEmailRequest(BaseModel):
+    raw_text: str
+    sender_email: Optional[str] = ""
+
+class EmailSyncConfigRequest(BaseModel):
+    email_address: str
+    app_password: str
+    imap_server: Optional[str] = "imap.gmail.com"
+    imap_port: Optional[int] = 993
+    enabled: bool = True
+
+# ==========================================
+# Phase 6: 1-Click ATS Auto-Fill Engine
+# ==========================================
+@app.get("/api/autofill/profile")
+def get_candidate_profile_endpoint():
+    """Returns candidate profile for Workday, Greenhouse & Lever autofill."""
+    return autofill_engine.load_candidate_profile()
+
+@app.post("/api/autofill/profile")
+def save_candidate_profile_endpoint(profile: dict):
+    """Updates candidate profile details."""
+    autofill_engine.save_candidate_profile(profile)
+    return {"status": "success", "profile": profile}
+
+@app.get("/api/autofill/bookmarklet")
+def get_bookmarklet_endpoint():
+    """Returns 1-click JavaScript bookmarklet code for browser toolbar."""
+    return {
+        "status": "success",
+        "bookmarklet": autofill_engine.get_bookmarklet_code()
+    }
+
+# ==========================================
+# Phase 7: Email / Recruiter Auto-Sync Engine
+# ==========================================
+@app.post("/api/email-sync/parse")
+def parse_email_message_endpoint(req: ParseEmailRequest):
+    """Parses recruiter message text, classifies interview round, and updates Kanban board."""
+    return email_sync_engine.parse_and_sync_recruiter_message(req.raw_text, req.sender_email or "")
+
+@app.get("/api/email-sync/feed")
+def get_synced_emails_endpoint():
+    """Returns log of parsed email events."""
+    return email_sync_engine.get_synced_email_events()
+
+@app.get("/api/email-sync/config")
+def get_email_config_endpoint():
+    """Returns IMAP sync configuration."""
+    return email_sync_engine.get_email_config()
+
+@app.post("/api/email-sync/config")
+def update_email_config_endpoint(req: EmailSyncConfigRequest):
+    """Updates Gmail IMAP credentials."""
+    return email_sync_engine.update_email_config(req.dict())
+
+@app.post("/api/email-sync/trigger-imap")
+def trigger_imap_sync_endpoint():
+    """Triggers live IMAP email inbox sync."""
+    return email_sync_engine.sync_imap_inbox()
+
+# ==========================================
+# Phase 8: Salary Negotiation & Market Intel
+# ==========================================
+@app.get("/api/salary-intel/benchmarks")
+def get_salary_benchmarks_endpoint():
+    """Returns verified Pune/Mumbai GCC cybersecurity salary benchmarks for 2-3 YOE."""
+    return {"status": "success", "benchmarks": salary_intel_engine.get_market_benchmarks()}
+
+@app.get("/api/salary-intel/calculate")
+def calculate_ctc_endpoint(target_lpa: float = Query(12.0, ge=6.0, le=30.0), fixed_pct: float = Query(0.85, ge=0.7, le=1.0)):
+    """Calculates realistic fixed, variable, monthly in-hand and hike over 4 LPA."""
+    return {"status": "success", "breakdown": salary_intel_engine.calculate_ctc_breakdown(target_lpa, fixed_pct)}
+
+@app.get("/api/salary-intel/playbook")
+def get_negotiation_playbook_endpoint():
+    """Returns objection handling scripts for 100%+ hike requests."""
+    return {"status": "success", "scripts": salary_intel_engine.get_negotiation_playbook()}
+
+# ==========================================
+# Phase 9: Technical Interview & KQL Co-Pilot
+# ==========================================
+@app.get("/api/interview-copilot/kql")
+def get_kql_cheatsheet_endpoint():
+    """Returns production Sentinel KQL query cheat sheets with detection logic."""
+    return {"status": "success", "queries": interview_copilot_engine.get_kql_cheatsheet()}
+
+@app.get("/api/interview-copilot/palo-alto")
+def get_palo_alto_endpoint():
+    """Returns Palo Alto NGFW & Panorama troubleshooting guides."""
+    return {"status": "success", "topics": interview_copilot_engine.get_palo_alto_troubleshooting()}
+
+@app.get("/api/interview-copilot/qa")
+def get_interview_coaching_endpoint():
+    """Returns high-frequency GCC interview questions with verified STAR answers."""
+    return {"status": "success", "questions": interview_copilot_engine.get_interview_coaching()}
 
 @app.get("/")
 def serve_index():

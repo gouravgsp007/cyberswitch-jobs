@@ -62,6 +62,20 @@ def run_sync():
     job_engine.generate_excel_file(processed)
     print(f"Regenerated prioritized Excel workbook successfully ({job_engine.EXCEL_PATH})!")
 
+    # 6. Dispatch alerts for top priority fresh matches
+    try:
+        import alert_engine
+        p1_fresh = [p for p in processed if ("P1" in p.get("priority", "")) and ("Today" in p.get("posted_date", "") or "Just" in p.get("posted_date", "") or "1 day" in p.get("posted_date", ""))]
+        alert_count = 0
+        for j in p1_fresh[:10]:
+            res = alert_engine.trigger_job_alert(j)
+            if res.get("status") == "success":
+                alert_count += 1
+        if alert_count > 0:
+            print(f"Dispatched {alert_count} fresh P1 job alerts (Telegram/Local)!")
+    except Exception as e:
+        print(f"Alert dispatch note: {e}")
+
     # Summary of direct ATS jobs currently in processed list
     ats_in_processed = [p for p in processed if "workday" in p["source"].lower() or "greenhouse" in p["source"].lower()]
     print(f"\nDirect ATS Jobs in Processed List: {len(ats_in_processed)}")

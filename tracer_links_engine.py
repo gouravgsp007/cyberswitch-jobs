@@ -18,9 +18,9 @@ LINKS_FILE = os.path.join(DATA_DIR, "tracer_links.json")
 CLICKS_FILE = os.path.join(DATA_DIR, "tracer_clicks.json")
 
 DEFAULT_DESTINATIONS = {
-    "linkedin": "https://www.linkedin.com/in/gourav-parit/",
+    "linkedin": "https://www.linkedin.com/in/gourav-parit-09154313b/",
     "credly": "https://www.credly.com/users/gourav-parit/",
-    "portfolio": "https://github.com/gourav-parit"
+    "portfolio": "https://github.com/gouravgsp007"
 }
 
 def load_json_file(filepath: str, default: Any) -> Any:

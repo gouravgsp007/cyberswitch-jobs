@@ -7,4 +7,9 @@ env/
 venv/
 .system_generated/
 *.log
+data/*config*.json
+data/synced_emails.json
+data/email_sync_config.json
+data/job_alerts_config.json
+data/alert_config.json
 .github/
